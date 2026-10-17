@@ -27,3 +27,13 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Configuración local del editor
+.idea/
+*.iml
+
+# Archivos generados por Flutter y Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
