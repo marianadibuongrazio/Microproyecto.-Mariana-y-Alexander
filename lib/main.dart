@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'game/puzzle_game_screen.dart';
-import 'models/app_settings.dart';
 import 'services/local_storage.dart';
 
 void main() {
@@ -28,6 +27,78 @@ class MyApp extends StatelessWidget {
 
 class MenuPrincipal extends StatelessWidget {
   const MenuPrincipal({super.key});
+
+  Future<void> seleccionarDificultad(BuildContext context) async {
+    final storage = LocalStorage();
+    final preferencias = await storage.loadSettings();
+
+    if (!context.mounted) return;
+
+    final dificultad = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) {
+        return SimpleDialog(
+          title: const Text('Selecciona la dificultad'),
+          children: [
+            for (final opcion in [
+              (3, 'Fácil', '8 piezas'),
+              (4, 'Medio', '15 piezas'),
+              (5, 'Difícil', '24 piezas'),
+            ])
+              SimpleDialogOption(
+                onPressed: () {
+                  Navigator.pop(dialogContext, opcion.$1);
+                },
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.grid_view),
+                  title: Text('${opcion.$2} · ${opcion.$1}×${opcion.$1}'),
+                  subtitle: Text(opcion.$3),
+                  trailing: preferencias.gridSize == opcion.$1
+                      ? const Icon(Icons.check, color: Colors.teal)
+                      : null,
+                ),
+              ),
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // Al cancelar, no se inicia una partida ni se cambia la preferencia.
+    if (dificultad == null || !context.mounted) return;
+
+    final nuevasPreferencias = preferencias.copyWith(gridSize: dificultad);
+
+    try {
+      await storage.saveSettings(nuevasPreferencias);
+    } catch (_) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo guardar la dificultad elegida.'),
+        ),
+      );
+    }
+
+    if (!context.mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (context) => PuzzleGameScreen(
+          gridSize: dificultad,
+          tileStyle: nuevasPreferencias.tileStyle,
+          animationsEnabled: nuevasPreferencias.animationsEnabled,
+          storage: storage,
+        ),
+      ),
+    );
+  }
 
   // Aviso temporal para las funciones que todavía faltan.
   void mostrarAviso(BuildContext context, String nombre) {
@@ -70,19 +141,7 @@ class MenuPrincipal extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 FilledButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (context) => PuzzleGameScreen(
-                          gridSize: 3,
-                          tileStyle: TileStyle.classic,
-                          animationsEnabled: true,
-                          storage: LocalStorage(),
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: () => seleccionarDificultad(context),
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Jugar'),
                 ),
