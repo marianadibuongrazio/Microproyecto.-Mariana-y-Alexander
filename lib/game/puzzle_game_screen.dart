@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../models/app_settings.dart';
 import '../models/high_score.dart';
 import '../services/local_storage.dart';
+import '../theme/app_colors.dart';
 import 'puzzle_engine.dart';
 
 /// Pantalla del juego: solo usa el motor A1 y los contratos de M1.
@@ -167,7 +168,10 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
       builder: (dialogContext) => AlertDialog(
         key: const Key('victory-dialog'),
         icon: const Icon(Icons.emoji_events_outlined, size: 42),
-        title: const Text('¡Rompecabezas resuelto!'),
+        title: Text(
+          '¡Rompecabezas resuelto!',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
         content: Text(
           'Dificultad: $difficulty ($gridSize×$gridSize)\n'
           'Tiempo: $elapsed\n'
@@ -194,85 +198,134 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
     );
   }
 
-  Color _tileBackground(int value, ColorScheme scheme) {
+  /// Mantiene los cuatro estilos de Mariana dentro de la nueva paleta.
+  Color _tileBackground(int value) {
     return switch (widget.tileStyle) {
-      TileStyle.classic => scheme.primaryContainer,
-      TileStyle.colorful =>
-        Colors.primaries[(value - 1) % Colors.primaries.length].shade200,
-      TileStyle.retro => const Color(0xFFE5BB82),
-      TileStyle.minimalist => scheme.surfaceContainerHighest,
+      TileStyle.classic => AppColors.cobalt,
+      TileStyle.colorful => switch ((value - 1) % 4) {
+        0 => AppColors.cobalt,
+        1 => AppColors.yellow,
+        2 => AppColors.navy,
+        _ => AppColors.white,
+      },
+      TileStyle.retro => AppColors.navy,
+      TileStyle.minimalist => AppColors.white,
     };
   }
 
-  Color _tileForeground(ColorScheme scheme) {
-    return switch (widget.tileStyle) {
-      TileStyle.classic => scheme.onPrimaryContainer,
-      TileStyle.colorful => const Color(0xFF17212B),
-      TileStyle.retro => const Color(0xFF492D1E),
-      TileStyle.minimalist => scheme.onSurface,
-    };
+  Color _tileForeground(int value) {
+    if (widget.tileStyle == TileStyle.minimalist) return AppColors.navy;
+    if (widget.tileStyle == TileStyle.retro) return AppColors.yellow;
+    if (widget.tileStyle == TileStyle.colorful &&
+        (value - 1) % 4 != 0 &&
+        (value - 1) % 4 != 2) {
+      return AppColors.navy;
+    }
+    return AppColors.white;
   }
 
-  Widget _tile(int index, int value, double side) {
-    final scheme = Theme.of(context).colorScheme;
-    final isEmpty = value == 0;
-    final duration = widget.animationsEnabled
-        ? const Duration(milliseconds: 180)
-        : Duration.zero;
-    final radius = switch (widget.tileStyle) {
-      TileStyle.retro => 6.0,
-      TileStyle.minimalist => 4.0,
-      _ => 14.0,
-    };
-
-    return Semantics(
-      label: isEmpty ? 'Espacio vacío' : 'Pieza $value',
-      button: !isEmpty,
-      child: InkWell(
-        key: Key('tile-$value'),
-        borderRadius: BorderRadius.circular(radius),
-        onTap: isEmpty ? null : () => _move(index),
-        child: AnimatedSwitcher(
-          duration: duration,
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: ScaleTransition(scale: animation, child: child),
+  /// Las fichas viven en un Stack por ID (valor), nunca por indice de celda.
+  /// AnimatedPositioned cambia realmente de X/Y cuando el motor mueve una ficha.
+  Widget _animatedTile(int value, double cell, double gap) {
+    final index = _engine.tiles.indexOf(value);
+    final row = index ~/ widget.gridSize;
+    final column = index % widget.gridSize;
+    final radius = widget.tileStyle == TileStyle.minimalist ? 8.0 : 14.0;
+    return AnimatedPositioned(
+      key: ValueKey<String>('positioned-$value'),
+      duration: widget.animationsEnabled
+          ? const Duration(milliseconds: 240)
+          : Duration.zero,
+      curve: Curves.easeInOutCubic,
+      left: column * (cell + gap),
+      top: row * (cell + gap),
+      width: cell,
+      height: cell,
+      child: Semantics(
+        label: 'Pieza $value',
+        button: true,
+        child: Material(
+          color: _tileBackground(value),
+          borderRadius: BorderRadius.circular(radius),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            key: Key('tile-$value'),
+            onTap: () => _move(_engine.tiles.indexOf(value)),
+            child: Container(
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(radius),
+                border: Border.all(
+                  color: widget.tileStyle == TileStyle.minimalist
+                      ? AppColors.cobalt
+                      : AppColors.navy.withValues(alpha: 0.16),
+                  width: widget.tileStyle == TileStyle.minimalist ? 2 : 1,
+                ),
+              ),
+              child: Text(
+                '$value',
+                style: TextStyle(
+                  fontFamily: 'CalSans',
+                  fontSize: math.max(13.0, math.min(cell * 0.36, 42.0)),
+                  color: _tileForeground(value),
+                ),
+              ),
+            ),
           ),
-          child: isEmpty
-              ? Container(
-                  key: const ValueKey<int>(0),
-                  decoration: BoxDecoration(
-                    color: scheme.surface.withValues(alpha: 0.42),
-                    borderRadius: BorderRadius.circular(radius),
-                    border: Border.all(
-                      color: scheme.outlineVariant.withValues(alpha: 0.45),
-                    ),
-                  ),
-                )
-              : Container(
-                  key: ValueKey<int>(value),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: _tileBackground(value, scheme),
-                    borderRadius: BorderRadius.circular(radius),
-                    border: Border.all(
-                      color: scheme.outlineVariant.withValues(alpha: 0.25),
-                    ),
-                  ),
-                  child: Text(
-                    '$value',
-                    style: TextStyle(
-                      fontSize: math.max(
-                        13.0,
-                        math.min(side / widget.gridSize * 0.34, 32.0),
+        ),
+      ),
+    );
+  }
+
+  Widget _board(double side) {
+    final tiles = _engine.tiles;
+    final grid = widget.gridSize;
+    final gap = grid == 5 ? 5.0 : 8.0;
+    const padding = 8.0;
+    final inner = side - padding * 2;
+    final cell = (inner - gap * (grid - 1)) / grid;
+    final empty = _engine.emptyIndex;
+    final emptyRow = empty ~/ grid;
+    final emptyColumn = empty % grid;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    return SizedBox.square(
+      dimension: side,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: dark ? const Color(0xFF132B78) : const Color(0xFFEAF2FF),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: AppColors.cobalt, width: 2),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(padding),
+          child: Stack(
+            key: const Key('puzzle-board'),
+            children: [
+              // La casilla vacia marca el destino, sin interceptar taps.
+              Positioned(
+                left: emptyColumn * (cell + gap),
+                top: emptyRow * (cell + gap),
+                width: cell,
+                height: cell,
+                child: Semantics(
+                  label: 'Espacio vacío',
+                  child: Container(
+                    key: const Key('tile-0'),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppColors.cobalt.withValues(alpha: 0.35),
+                        width: 2,
                       ),
-                      fontWeight: widget.tileStyle == TileStyle.minimalist
-                          ? FontWeight.w500
-                          : FontWeight.w800,
-                      color: _tileForeground(scheme),
                     ),
                   ),
                 ),
+              ),
+              for (final value in tiles)
+                if (value != 0) _animatedTile(value, cell, gap),
+            ],
+          ),
         ),
       ),
     );
@@ -283,7 +336,9 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF132B78)
+            : const Color(0xFFEAF2FF),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -298,8 +353,7 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
               Text(
                 value,
                 key: key,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
             ],
           ),
@@ -311,7 +365,6 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final tiles = _engine.tiles;
     return Scaffold(
       appBar: AppBar(
         title: Text('$_difficulty · ${widget.gridSize}×${widget.gridSize}'),
@@ -328,7 +381,6 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
         builder: (context, constraints) {
           final availableWidth = math.max(0.0, constraints.maxWidth - 32);
           final boardSide = math.min(470.0, availableWidth);
-          final gap = widget.gridSize == 5 ? 5.0 : 8.0;
           return SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
@@ -340,8 +392,7 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
                     children: [
                       Text(
                         'Ordena las piezas',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w800),
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 5),
                       Text(
@@ -371,31 +422,7 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      SizedBox.square(
-                        dimension: boardSide,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: scheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(19),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: GridView.builder(
-                              key: const Key('puzzle-board'),
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: tiles.length,
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: widget.gridSize,
-                                    crossAxisSpacing: gap,
-                                    mainAxisSpacing: gap,
-                                  ),
-                              itemBuilder: (context, index) =>
-                                  _tile(index, tiles[index], boardSide - 16),
-                            ),
-                          ),
-                        ),
-                      ),
+                      _board(boardSide),
                       const SizedBox(height: 18),
                       Wrap(
                         alignment: WrapAlignment.center,
