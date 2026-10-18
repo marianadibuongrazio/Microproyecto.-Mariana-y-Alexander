@@ -43,12 +43,17 @@ jobs:
       - name: Build web for repository subpath
         run: flutter build web --release --base-href "/Microproyecto.-Mariana-y-Alexander/"
 
+      - name: Generate offline PWA assets
+        run: python3 tool/build_pwa.py build/web
+
       - name: Check compiled website
         shell: bash
         run: |
           test -s build/web/index.html
           test -s build/web/flutter_bootstrap.js
           test -s build/web/manifest.json
+          test -s build/web/puzzle-sw.js
+          grep -Fq 'canvasKitBaseUrl' build/web/flutter_bootstrap.js
           grep -Fq '<base href="/Microproyecto.-Mariana-y-Alexander/">' build/web/index.html
 
       - name: Configure GitHub Pages
