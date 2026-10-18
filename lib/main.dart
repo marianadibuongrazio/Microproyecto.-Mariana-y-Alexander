@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'configuracion.dart';
+import 'models/app_settings.dart';
 import 'game/puzzle_game_screen.dart';
 import 'services/local_storage.dart';
 
@@ -8,25 +10,67 @@ void main() {
 }
 
 // Configuración general de la aplicación.
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _tema = ThemeMode.system;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarTema();
+  }
+
+  Future<void> _cargarTema() async {
+    try {
+      final preferencias = await LocalStorage().loadSettings();
+
+      if (!mounted) return;
+
+      setState(() => _tema = preferencias.themeMode);
+    } catch (_) {
+      // Si no se puede leer el almacenamiento, se conserva el tema del sistema.
+    }
+  }
+
+  void _aplicarPreferencias(AppSettings preferencias) {
+    setState(() => _tema = preferencias.themeMode);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Rompecabezas Deslizante',
       debugShowCheckedModeBanner: false,
+      themeMode: _tema,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.teal,
+          brightness: Brightness.light,
+        ),
         useMaterial3: true,
       ),
-      home: const MenuPrincipal(),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.teal,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+      ),
+      home: MenuPrincipal(alCambiarPreferencias: _aplicarPreferencias),
     );
   }
 }
 
 class MenuPrincipal extends StatelessWidget {
-  const MenuPrincipal({super.key});
+  const MenuPrincipal({super.key, required this.alCambiarPreferencias});
+
+  final ValueChanged<AppSettings> alCambiarPreferencias;
 
   Future<void> seleccionarDificultad(BuildContext context) async {
     final storage = LocalStorage();
@@ -100,6 +144,22 @@ class MenuPrincipal extends StatelessWidget {
     );
   }
 
+  Future<void> abrirConfiguracion(BuildContext context) async {
+    final preferencias = await LocalStorage().loadSettings();
+
+    if (!context.mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (context) => Configuracion(
+          preferencias: preferencias,
+          alGuardar: alCambiarPreferencias,
+        ),
+      ),
+    );
+  }
+
   // Aviso temporal para las funciones que todavía faltan.
   void mostrarAviso(BuildContext context, String nombre) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -153,7 +213,7 @@ class MenuPrincipal extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () => mostrarAviso(context, 'Configuración'),
+                  onPressed: () => abrirConfiguracion(context),
                   icon: const Icon(Icons.settings),
                   label: const Text('Configuración'),
                 ),
