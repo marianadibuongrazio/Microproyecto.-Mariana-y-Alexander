@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'game/puzzle_game_screen.dart';
+import 'models/app_settings.dart';
+import 'services/local_storage.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -66,7 +70,19 @@ class MenuPrincipal extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 FilledButton.icon(
-                  onPressed: () => mostrarAviso(context, 'El juego'),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (context) => PuzzleGameScreen(
+                          gridSize: 3,
+                          tileStyle: TileStyle.classic,
+                          animationsEnabled: true,
+                          storage: LocalStorage(),
+                        ),
+                      ),
+                    );
+                  },
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Jugar'),
                 ),
