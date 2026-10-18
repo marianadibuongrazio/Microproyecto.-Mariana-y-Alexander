@@ -4,11 +4,12 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../models/app_settings.dart';
+import '../models/high_score.dart';
 import '../services/local_storage.dart';
 import 'puzzle_engine.dart';
 
 /// Pantalla del juego: solo usa el motor A1 y los contratos de M1.
-/// El guardado de una victoria en LocalStorage corresponde a A3.
+/// A3 guarda victorias mediante LocalStorage, una vez por partida.
 class PuzzleGameScreen extends StatefulWidget {
   const PuzzleGameScreen({
     super.key,
@@ -36,6 +37,7 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
   final Stopwatch _stopwatch = Stopwatch();
   Timer? _refreshTimer;
   bool _finished = false;
+  int _gameSession = 0;
 
   @override
   void initState() {
@@ -48,6 +50,7 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.gridSize != widget.gridSize ||
         oldWidget.initialEngine != widget.initialEngine) {
+      _gameSession++;
       _stopClock();
       _stopwatch.reset();
       _engine = widget.initialEngine ?? PuzzleEngine(gridSize: widget.gridSize);
@@ -110,6 +113,7 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
   }
 
   void _reset() {
+    _gameSession++;
     _stopClock();
     _stopwatch.reset();
     setState(() {
@@ -119,6 +123,44 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
   }
 
   Future<void> _showVictory() async {
+    // Capturamos métricas del tablero ya resuelto antes de cualquier await.
+    // _finished impide volver a invocar este método por nuevos movimientos.
+    final session = _gameSession;
+    final gridSize = widget.gridSize;
+    final difficulty = _difficulty;
+    final elapsed = _elapsed;
+    final elapsedMs = _stopwatch.elapsedMilliseconds;
+    final moves = _engine.moves;
+
+    ScoreUpdate? update;
+    var saveFailed = false;
+    try {
+      update = await widget.storage.registerWin(
+        gridSize: gridSize,
+        elapsedMs: elapsedMs,
+        moves: moves,
+      );
+    } catch (_) {
+      saveFailed = true;
+    }
+
+    // Si se reinició/cambió la partida o se cerró la pantalla mientras
+    // guardábamos, no mostramos un resumen de una partida anterior.
+    if (!mounted || !_finished || session != _gameSession) return;
+
+    final recordMessage = switch ((
+      update?.newBestTime,
+      update?.newFewestMoves,
+    )) {
+      (true, true) => '\n¡Nuevo récord de tiempo y movimientos!',
+      (true, _) => '\n¡Nuevo récord de tiempo!',
+      (_, true) => '\n¡Nuevo récord de movimientos!',
+      _ => '',
+    };
+    final errorMessage = saveFailed
+        ? '\nNo se pudo guardar el resultado en este dispositivo.'
+        : '';
+
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -127,9 +169,9 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
         icon: const Icon(Icons.emoji_events_outlined, size: 42),
         title: const Text('¡Rompecabezas resuelto!'),
         content: Text(
-          'Dificultad: $_difficulty (${widget.gridSize}×${widget.gridSize})\n'
-          'Tiempo: $_elapsed\n'
-          'Movimientos: ${_engine.moves}',
+          'Dificultad: $difficulty ($gridSize×$gridSize)\n'
+          'Tiempo: $elapsed\n'
+          'Movimientos: $moves$recordMessage$errorMessage',
         ),
         actions: [
           TextButton(
