@@ -97,7 +97,7 @@ class MenuPrincipal extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'Mariana y Alexander\nSistemas de Información',
+                  'Mariana Di Buongrazio y Alexander Ramirez \nMicroproyecto Sistemas de Información',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 13),
                 ),
