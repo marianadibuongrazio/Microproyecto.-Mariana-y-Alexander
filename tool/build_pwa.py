@@ -44,12 +44,13 @@ def main() -> None:
         raise SystemExit("Error: Flutter no sustituyo $FLUTTER_BASE_HREF.")
 
     files = sorted(
-        file.relative_to(build).as_posix()
-        for file in build.rglob("*")
-        if file.is_file()
-        and file.name not in {SW_NAME, "flutter_service_worker.js"}
-        and not file.name.endswith((".map", ".js.map"))
-    )
+      file.relative_to(build).as_posix()
+      for file in build.rglob("*")
+      if file.is_file()
+      and not any(part.startswith(".") for part in file.relative_to(build).parts)
+      and file.name not in {SW_NAME, "flutter_service_worker.js"}
+      and not file.name.endswith((".map", ".js.map"))
+)
 
     # Una huella de todos los archivos hace que cada release genere una cache nueva.
     h = hashlib.sha256()
