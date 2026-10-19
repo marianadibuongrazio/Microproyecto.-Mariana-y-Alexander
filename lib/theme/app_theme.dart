@@ -23,6 +23,12 @@ abstract final class AppTheme {
           secondary: AppColors.yellow,
           onSecondary: AppColors.navy,
           surface: background,
+          surfaceContainerLowest: background,
+          surfaceContainerLow: background,
+          surfaceContainer: background,
+          surfaceContainerHigh: background,
+          surfaceContainerHighest: background,
+          onSurfaceVariant: foreground,
           onSurface: foreground,
           primaryContainer: dark ? AppColors.cobalt : const Color(0xFFEAF2FF),
           onPrimaryContainer: dark ? AppColors.white : AppColors.navy,
@@ -58,6 +64,39 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: background,
       fontFamily: 'DMSans',
       textTheme: headings,
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(26),
+          side: const BorderSide(color: AppColors.cobalt, width: 2),
+        ),
+        titleTextStyle: const TextStyle(
+          fontFamily: 'CalSans',
+          fontSize: 26,
+          color: AppColors.navy,
+        ),
+        contentTextStyle: const TextStyle(
+          fontFamily: 'DMSans',
+          fontSize: 16,
+          color: AppColors.navy,
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.cobalt,
+        contentTextStyle: const TextStyle(
+          fontFamily: 'DMSans',
+          color: AppColors.white,
+          fontSize: 14,
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: background,
+        textStyle: TextStyle(fontFamily: 'DMSans', color: foreground),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: background,
         foregroundColor: foreground,
@@ -70,7 +109,9 @@ abstract final class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        color: dark ? const Color(0xFF132B78) : AppColors.white,
+        color: dark
+            ? AppColors.cobalt.withValues(alpha: 0.18)
+            : AppColors.white,
         elevation: 0,
         shape: shape(22),
       ),
@@ -94,7 +135,9 @@ abstract final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: dark ? const Color(0xFF132B78) : const Color(0xFFF4F7FF),
+        fillColor: dark
+            ? AppColors.cobalt.withValues(alpha: 0.18)
+            : AppColors.cobalt.withValues(alpha: 0.08),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: accent),
