@@ -5,6 +5,7 @@ import 'package:puzzle_deslizante/main.dart';
 void main() {
   testWidgets('Abrir instrucciones y regresar al menú', (tester) async {
     await tester.pumpWidget(const MyApp());
+    await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
 
     // Verificar que estamos en el menú principal.

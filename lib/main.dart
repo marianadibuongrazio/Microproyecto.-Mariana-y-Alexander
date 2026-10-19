@@ -7,6 +7,8 @@ import 'services/local_storage.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'widgets/game_logo.dart';
+import 'marcadores.dart';
+import 'splash.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,6 +24,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   ThemeMode _tema = ThemeMode.system;
+  bool _mostrarSplash = true;
 
   @override
   void initState() {
@@ -51,7 +54,20 @@ class _MyAppState extends State<MyApp> {
       themeMode: _tema,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      home: MenuPrincipal(alCambiarPreferencias: _aplicarPreferencias),
+      home: _mostrarSplash
+          ? Splash(
+              alTerminar: () {
+                setState(() => _mostrarSplash = false);
+              },
+            )
+          : TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 450),
+              builder: (context, valor, child) {
+                return Opacity(opacity: valor, child: child);
+              },
+              child: MenuPrincipal(alCambiarPreferencias: _aplicarPreferencias),
+            ),
     );
   }
 }
@@ -210,7 +226,14 @@ class MenuPrincipal extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () => mostrarAviso(context, 'Marcadores'),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (context) => const Marcadores(),
+                      ),
+                    );
+                  },
                   icon: const Icon(Icons.emoji_events_outlined),
                   label: const Text('Marcadores'),
                 ),
