@@ -55,10 +55,14 @@ class _ConfiguracionState extends State<Configuracion> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: dark ? const Color(0xFF132B78) : const Color(0xFFF4F7FF),
+        color: dark
+            ? AppColors.cobalt.withValues(alpha: 0.18)
+            : AppColors.cobalt.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: dark ? AppColors.cobalt : const Color(0xFFD6E5FF),
+          color: dark
+              ? AppColors.cobalt
+              : AppColors.cobalt.withValues(alpha: 0.25),
         ),
       ),
       child: Column(
@@ -97,6 +101,10 @@ class _ConfiguracionState extends State<Configuracion> {
                 _section(
                   'Tema',
                   DropdownButtonFormField<ThemeMode>(
+                    dropdownColor:
+                        Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.navy
+                        : AppColors.white,
                     initialValue: _preferencias.themeMode,
                     isExpanded: true,
                     decoration: const InputDecoration(
@@ -132,6 +140,10 @@ class _ConfiguracionState extends State<Configuracion> {
                 _section(
                   'Dificultad',
                   DropdownButtonFormField<int>(
+                    dropdownColor:
+                        Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.navy
+                        : AppColors.white,
                     initialValue: _preferencias.gridSize,
                     isExpanded: true,
                     decoration: const InputDecoration(
@@ -158,6 +170,10 @@ class _ConfiguracionState extends State<Configuracion> {
                 _section(
                   'Estilo de las piezas',
                   DropdownButtonFormField<TileStyle>(
+                    dropdownColor:
+                        Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.navy
+                        : AppColors.white,
                     initialValue: _preferencias.tileStyle,
                     isExpanded: true,
                     decoration: const InputDecoration(

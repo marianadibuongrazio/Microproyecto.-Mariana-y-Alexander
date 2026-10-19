@@ -61,45 +61,193 @@ class MenuPrincipal extends StatelessWidget {
 
   final ValueChanged<AppSettings> alCambiarPreferencias;
 
+  Future<int?> _mostrarSelectorDificultad(
+    BuildContext context, {
+    required int? dificultadActual,
+  }) {
+    const opciones = [
+      (3, 'Fácil', '8 piezas'),
+      (4, 'Medio', '15 piezas'),
+      (5, 'Difícil', '24 piezas'),
+    ];
+
+    return showDialog<int>(
+      context: context,
+      barrierColor: AppColors.navy.withValues(alpha: 0.72),
+      builder: (dialogContext) => Dialog(
+        key: const Key('difficulty-dialog'),
+        backgroundColor: AppColors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(26),
+          side: const BorderSide(color: AppColors.cobalt, width: 2),
+        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Selecciona la dificultad',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'CalSans',
+                    fontSize: 28,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Elige el tamaño del tablero para tu partida.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 14,
+                    color: AppColors.navy.withValues(alpha: 0.72),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                for (final opcion in opciones) ...[
+                  _opcionDificultad(
+                    valor: opcion.$1,
+                    titulo: '${opcion.$2} · ${opcion.$1}×${opcion.$1}',
+                    subtitulo: opcion.$3,
+                    seleccionada: dificultadActual == opcion.$1,
+                    onTap: () => Navigator.pop(dialogContext, opcion.$1),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                const SizedBox(height: 6),
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.navy,
+                    backgroundColor: AppColors.white,
+                    side: const BorderSide(color: AppColors.navy, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    textStyle: const TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 16,
+                    ),
+                  ),
+                  child: const Text('Cancelar'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _opcionDificultad({
+    required int valor,
+    required String titulo,
+    required String subtitulo,
+    required bool seleccionada,
+    required VoidCallback onTap,
+  }) {
+    return Semantics(
+      label: 'Dificultad $titulo, $subtitulo',
+      selected: seleccionada,
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          key: Key('difficulty-option-$valor'),
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+          decoration: BoxDecoration(
+            color: seleccionada
+                ? AppColors.yellow.withValues(alpha: 0.18)
+                : AppColors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: seleccionada
+                  ? AppColors.cobalt
+                  : AppColors.navy.withValues(alpha: 0.18),
+              width: seleccionada ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.cobalt.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.grid_view_rounded,
+                  color: AppColors.cobalt,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titulo,
+                      style: const TextStyle(
+                        fontFamily: 'CalSans',
+                        fontSize: 18,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitulo,
+                      style: TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 14,
+                        color: AppColors.navy.withValues(alpha: 0.70),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (seleccionada)
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: const BoxDecoration(
+                    color: AppColors.yellow,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: AppColors.navy,
+                    size: 22,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> seleccionarDificultad(BuildContext context) async {
     final storage = LocalStorage();
     final preferencias = await storage.loadSettings();
     if (!context.mounted) return;
 
-    final dificultad = await showDialog<int>(
-      context: context,
-      builder: (dialogContext) => SimpleDialog(
-        title: Text(
-          'Selecciona la dificultad',
-          style: Theme.of(dialogContext).textTheme.titleLarge,
-        ),
-        children: [
-          for (final opcion in [
-            (3, 'Fácil', '8 piezas'),
-            (4, 'Medio', '15 piezas'),
-            (5, 'Difícil', '24 piezas'),
-          ])
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(dialogContext, opcion.$1),
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.grid_view),
-                title: Text('${opcion.$2} · ${opcion.$1}×${opcion.$1}'),
-                subtitle: Text(opcion.$3),
-                trailing: preferencias.gridSize == opcion.$1
-                    ? Icon(
-                        Icons.check_circle,
-                        color: Theme.of(dialogContext).colorScheme.primary,
-                      )
-                    : null,
-              ),
-            ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancelar'),
-          ),
-        ],
-      ),
+    final dificultad = await _mostrarSelectorDificultad(
+      context,
+      dificultadActual: preferencias.gridSize,
     );
 
     if (dificultad == null || !context.mounted) return;

@@ -165,35 +165,131 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
+      barrierColor: AppColors.navy.withValues(alpha: 0.72),
+      builder: (dialogContext) => Dialog(
         key: const Key('victory-dialog'),
-        icon: const Icon(Icons.emoji_events_outlined, size: 42),
-        title: Text(
-          '¡Rompecabezas resuelto!',
-          style: Theme.of(context).textTheme.headlineSmall,
+        backgroundColor: AppColors.white,
+        surfaceTintColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(26),
+          side: const BorderSide(color: AppColors.cobalt, width: 2),
         ),
-        content: Text(
-          'Dificultad: $difficulty ($gridSize×$gridSize)\n'
-          'Tiempo: $elapsed\n'
-          'Movimientos: $moves$recordMessage$errorMessage',
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Icon(
+                  Icons.emoji_events_rounded,
+                  size: 54,
+                  color: AppColors.cobalt,
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  '¡Rompecabezas resuelto!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'CalSans',
+                    fontSize: 26,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.cobalt.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.cobalt.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: DefaultTextStyle(
+                    style: const TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: 16,
+                      color: AppColors.navy,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Dificultad: $difficulty ($gridSize×$gridSize)'),
+                        const SizedBox(height: 6),
+                        Text('Tiempo: $elapsed'),
+                        const SizedBox(height: 6),
+                        Text('Movimientos: $moves'),
+                      ],
+                    ),
+                  ),
+                ),
+                if (recordMessage.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.yellow,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(
+                      recordMessage.trim(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'DMSans',
+                        fontSize: 15,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                  ),
+                ],
+                if (errorMessage.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    errorMessage.trim(),
+                    style: const TextStyle(
+                      fontFamily: 'DMSans',
+                      color: AppColors.navy,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        side: const BorderSide(color: AppColors.navy),
+                      ),
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        Navigator.of(context).maybePop();
+                      },
+                      child: const Text('Menú Principal'),
+                    ),
+                    FilledButton(
+                      key: const Key('victory-reset-button'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.yellow,
+                        foregroundColor: AppColors.navy,
+                      ),
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        _reset();
+                      },
+                      child: const Text('Reiniciar'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              Navigator.of(context).maybePop();
-            },
-            child: const Text('Menú Principal'),
-          ),
-          FilledButton(
-            key: const Key('victory-reset-button'),
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              _reset();
-            },
-            child: const Text('Reiniciar'),
-          ),
-        ],
       ),
     );
   }
@@ -293,7 +389,9 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
       dimension: side,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: dark ? const Color(0xFF132B78) : const Color(0xFFEAF2FF),
+          color: dark
+              ? AppColors.cobalt.withValues(alpha: 0.18)
+              : AppColors.cobalt.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: AppColors.cobalt, width: 2),
         ),
@@ -337,8 +435,8 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF132B78)
-            : const Color(0xFFEAF2FF),
+            ? AppColors.cobalt.withValues(alpha: 0.18)
+            : AppColors.cobalt.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -435,7 +533,7 @@ class _PuzzleGameScreenState extends State<PuzzleGameScreen> {
                             icon: const Icon(Icons.home_outlined),
                             label: const Text('Menú Principal'),
                           ),
-                          FilledButton.tonalIcon(
+                          FilledButton.icon(
                             key: const Key('reset-button'),
                             onPressed: _reset,
                             icon: const Icon(Icons.refresh),
