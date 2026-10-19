@@ -82,6 +82,24 @@ class MenuPrincipal extends StatelessWidget {
     final preferencias = await storage.loadSettings();
     if (!context.mounted) return;
 
+        // Si ya existe una dificultad preferida, inicia directamente.
+    final dificultadGuardada = preferencias.gridSize;
+
+    if (dificultadGuardada != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (context) => PuzzleGameScreen(
+            gridSize: dificultadGuardada,
+            tileStyle: preferencias.tileStyle,
+            animationsEnabled: preferencias.animationsEnabled,
+            storage: storage,
+          ),
+        ),
+      );
+      return;
+    }
+
     final dificultad = await showDialog<int>(
       context: context,
       builder: (dialogContext) => SimpleDialog(
@@ -309,14 +327,16 @@ class Instrucciones extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Dificultades previstas',
+                  'Dificultades',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'Fácil: tablero de 3 × 3.\n'
                   'Medio: tablero de 4 × 4.\n'
-                  'Difícil: tablero de 5 × 5.',
+                  'Difícil: tablero de 5 × 5.\n\n'
+                  'Puedes cambiar la dificultad desde Configuración. '
+                  'Al pulsar Jugar se utiliza tu última selección guardada.',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
               ],

@@ -17,8 +17,11 @@ El objetivo es ordenar las fichas numeradas moviendo únicamente las que están 
 - Preferencias y récords guardados **localmente** mediante `shared_preferences`.
 - Compilación y publicación automáticas de Flutter Web mediante GitHub Actions y GitHub Pages.
 - PWA con manifiesto y caché offline. Después de la instalación y carga completa de sus recursos, la aplicación puede recargarse sin Internet en navegadores compatibles.
-
-> **Pendientes de interfaz al 18/10/2026:** la pantalla de consulta/borrado de marcadores y el Splash inicial todavía no están conectados en `main`. El menú muestra un aviso provisional en «Marcadores». Los récords sí se guardan internamente al ganar. El selector de dificultad se presenta al pulsar «Jugar», incluso cuando hay una preferencia previa. Estos puntos se actualizarán cuando se integren sus pantallas.
+- Pantalla inicial con logo animado y botón para saltar al menú.
+- Entrada animada del menú principal.
+- Consulta de récords por dificultad, con tiempo, movimientos y fecha de cada partida.
+- Borrado de todos los marcadores con confirmación, conservando las preferencias.
+- Inicio directo con la dificultad guardada; si todavía no existe una selección, se muestra el selector.
 
 ## Requisitos para desarrollo local
 
@@ -105,6 +108,8 @@ lib/
     high_score.dart           Récords y resultados
   services/
     local_storage.dart        Preferencias y récords locales
+    marcadores.dart             Consulta y borrado de récords
+    splash.dart                 Pantalla inicial animada
 test/
   puzzle_engine_test.dart
   puzzle_game_screen_test.dart
@@ -126,14 +131,13 @@ web/
 
 | Integrante | Principales aportes en el historial del repositorio |
 |---|---|
-| **Mariana Di Buongrazio** | Estructura inicial del proyecto, menú principal, instrucciones, navegación, selector de dificultad, configuración visual y aplicación del tema. |
+| **Mariana Di Buongrazio** | Configuración inicial de Flutter y GitHub; menú principal e instrucciones; selección de dificultad; pantalla de configuración de tema; pantalla de consulta y borrado de marcadores con confirmación; Splash animado y transición al menú; ajuste del inicio con dificultad guardada|
 | **Alexander Ramírez** | Motor y pruebas del puzzle; contratos, modelos y almacenamiento de preferencias y récords; pantalla del tablero; detección de victoria y guardado de resultados; despliegue web, PWA offline y documentación. |
 
 El trabajo se integra mediante ramas independientes y *pull requests* hacia `main`. La atribución de archivos se basa en los commits publicados: ambas personas colaboran en la revisión e integración del proyecto.
 
 ## Limitaciones conocidas
 
-- La pantalla visible de «Marcadores» y el Splash inicial están pendientes de integración en `main` a la fecha indicada arriba.
 - No existe sincronización de partidas, récords o preferencias entre dispositivos: el almacenamiento es local.
 - Para usar la PWA sin red, el navegador debe completar previamente la instalación y caché de los recursos online.
 - El modo imagen y la clasificación online no forman parte del alcance implementado.
